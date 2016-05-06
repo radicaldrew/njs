@@ -18,4 +18,51 @@ NXT_BUILDDIR=${NXT_BUILDDIR:-build}
 
 test -d $NXT_BUILDDIR || mkdir $NXT_BUILDDIR
 
+# ------------------------------------------  Module Configuration
+
+NGX_OPTIONS="--with-http_ssl_module --with-ipv6 --with-openssl=/nope/"
+for option
+do
+	NGX_OPTIONS="$NGX_OPTIONS $option"
+done
+
+# ------------------------------------------ Download SDK
+
+NGINX_SDK="nginx-1.10.0"
+NGINX_SDK_TGZ="${NGINX_SDK}.tar.gz"
+
+if [ ! -f /tmp/$NGINX_SDK_TGZ ]; then
+	wget http://nginx.org/download/$NGINX_SDK_TGZ -O /tmp/$NGINX_SDK_TGZ
+fi
+mkdir -p sdk
+tar xzf /tmp/$NGINX_SDK_TGZ -C sdk
+
+# ------------------------------------------  Mock Open SSL
+
+mkdir -p sdk/$NGINX_SDK/objs/openssl
+for f in bn.h conf.h crypto.h dh.h engine.h err.h evp.h ocsp.h rand.h rsa.h ssl.h x509.h x509v3.h; do
+	echo "" > sdk/$NGINX_SDK/objs/openssl/$f
+done
+
+cat <<EOF > sdk/$NGINX_SDK/objs/openssl/ssl.h
+typedef void SSL_SESSION;
+typedef void SSL_CTX;
+typedef void SSL;
+typedef void RSA;
+EOF
+
+# ------------------------------------------  SDK configuration
+
+pushd .
+echo "Building the SDK with options $NGX_OPTIONS"
+echo ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
+cd sdk/nginx-1.10.0 && ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
+popd
+echo "NGX_DYNMOD = yes" > Makefile.conf
+echo "NGX_INCL_OPT = " >> Makefile.conf
+
+# ------------------------------------------ NXT Configuration
+
+pushd .
 cd nxt && NXT_BUILDDIR=../${NXT_BUILDDIR} CC=${CC} ./auto/configure
+popd

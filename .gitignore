@@ -1,0 +1,4 @@
+sdk
+build
+Makefile.conf
+nxt/nxt_auto_config.h

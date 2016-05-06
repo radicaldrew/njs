@@ -16,6 +16,8 @@
 #include <nxt_mem_cache_pool.h>
 #include <njscript.h>
 
+#include "ngx_http_js_module.h"
+
 
 #define NGX_HTTP_JS_MCP_CLUSTER_SIZE    (2 * ngx_pagesize)
 #define NGX_HTTP_JS_MCP_PAGE_ALIGNMENT  128
@@ -95,6 +97,8 @@ static njs_ret_t ngx_http_js_ext_get_http_version(njs_vm_t *vm,
     njs_value_t *value, void *obj, uintptr_t data);
 static njs_ret_t ngx_http_js_ext_get_remote_address(njs_vm_t *vm,
     njs_value_t *value, void *obj, uintptr_t data);
+static njs_ret_t ngx_http_js_ext_get_var(njs_vm_t *vm,
+    njs_value_t *value, void *obj, uintptr_t data);
 static njs_ret_t ngx_http_js_ext_get_header_in(njs_vm_t *vm, njs_value_t *value,
     void *obj, uintptr_t data);
 static njs_ret_t ngx_http_js_ext_foreach_header_in(njs_vm_t *vm, void *obj,
@@ -106,7 +110,6 @@ static njs_ret_t ngx_http_js_ext_foreach_arg(njs_vm_t *vm, void *obj,
 static njs_ret_t ngx_http_js_ext_next_arg(njs_vm_t *vm, njs_value_t *value,
     void *obj, void *next);
 
-static char *ngx_http_js_run(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *ngx_http_js_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *ngx_http_js_compile(ngx_conf_t *cf, ngx_http_js_ctx_t *jctx,
     ngx_str_t *script);
@@ -115,8 +118,22 @@ static char *ngx_http_js_merge_loc_conf(ngx_conf_t *cf, void *parent,
     void *child);
 
 
+#ifdef NJS_PROFILER
+#include <sys/time.h>
+static unsigned long gettime() {
+  struct timeval now; gettimeofday(&now, NULL);return now.tv_usec+now.tv_sec*1000*1000;
+}
+#endif
+
+
 static ngx_command_t  ngx_http_js_commands[] = {
 
+    { ngx_string("js_run_block"),
+      NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_BLOCK|NGX_CONF_NOARGS,
+      ngx_http_js_run_block,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL }, 
     { ngx_string("js_run"),
       NGX_HTTP_LOC_CONF|NGX_HTTP_LMT_CONF|NGX_CONF_TAKE1,
       ngx_http_js_run,
@@ -366,6 +383,19 @@ static njs_external_t  ngx_http_js_externals[] = {
       NULL,
       NULL,
       0 },
+
+    { nxt_string("$v"),
+      NJS_EXTERN_OBJECT,
+      NULL,//properties
+      0,  //nproperties
+      ngx_http_js_ext_get_var,
+      NULL,//set
+      NULL,//find
+      NULL,//foreach,
+      NULL,//next,
+      NULL,//method
+      0,//data
+      },
 };
 
 
@@ -374,6 +404,9 @@ ngx_http_js_handler(ngx_http_request_t *r)
 {
     ngx_int_t                rc;
     ngx_http_js_loc_conf_t  *jlcf;
+#ifdef NJS_PROFILER
+    unsigned long t = gettime();
+#endif
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http js handler");
@@ -381,6 +414,9 @@ ngx_http_js_handler(ngx_http_request_t *r)
     jlcf = ngx_http_get_module_loc_conf(r, ngx_http_js_module);
 
     rc = ngx_http_js_vm_run(r, &jlcf->js, NULL);
+#ifdef NJS_PROFILER
+    printf("ngx_http_js_handler[%ld]\n",gettime()-t);
+#endif
 
     if (rc == NGX_OK) {
         return rc;
@@ -455,6 +491,12 @@ ngx_http_js_vm_run(ngx_http_request_t *r, ngx_http_js_ctx_t *js,
         return NGX_ERROR;
     }
 
+#ifdef NJS_PROFILER
+    printf("ngx_http_js_vm_run\n");
+    njs_disassembler(js->vm);
+    printf("-------------\n");
+#endif
+    
     if (js->function) {
         ret = njs_vm_call(nvm, js->function, js->args, 2);
 
@@ -939,6 +981,40 @@ ngx_http_js_ext_get_http_version(njs_vm_t *vm, njs_value_t *value, void *obj,
 
 
 static njs_ret_t
+ngx_http_js_ext_get_var(njs_vm_t *vm, njs_value_t *value, void *obj,
+    uintptr_t data)
+{
+    nxt_str_t                 *v;
+    ngx_http_request_t        *r;
+    njs_ret_t                 res;
+
+    ngx_str_t                 name;
+    ngx_uint_t                hash;
+    ngx_http_variable_value_t *val;
+
+    v = (nxt_str_t*)data;
+    name.len = v->len;
+    name.data = (u_char *) v->data;
+    hash = ngx_hash_key (v->data, v->len);;
+
+    r = (ngx_http_request_t *) obj;
+    val = ngx_http_get_variable( r, &name, hash);
+
+    if( val && !val->not_found && val->valid)  {
+        res = njs_string_create(vm, value, val->data, val->len, 0);
+    } else {
+        res = njs_string_create(vm, value, NULL, 0, 0);
+    }
+
+    if (val) {
+        ngx_pfree(r->pool,val);
+    }
+
+    return res;
+}
+
+
+static njs_ret_t
 ngx_http_js_ext_get_remote_address(njs_vm_t *vm, njs_value_t *value, void *obj,
     uintptr_t data)
 {
@@ -1061,7 +1137,7 @@ ngx_http_js_ext_next_arg(njs_vm_t *vm, njs_value_t *value, void *obj,
 }
 
 
-static char *
+char *
 ngx_http_js_run(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_js_loc_conf_t *jlcf = conf;
@@ -1069,6 +1145,9 @@ ngx_http_js_run(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     char                      *ret;
     ngx_str_t                 *value;
     ngx_http_core_loc_conf_t  *clcf;
+#ifdef NJS_PROFILER
+    unsigned long t = gettime();
+#endif
 
     value = cf->args->elts;
 
@@ -1086,6 +1165,9 @@ ngx_http_js_run(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
     clcf->handler = ngx_http_js_handler;
 
+#ifdef NJS_PROFILER
+    printf("ngx_http_js_run: [%ld]\n",gettime()-t);
+#endif
     return NGX_CONF_OK;
 }
 

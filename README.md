@@ -1,4 +1,28 @@
 
+# Standalone Module Build
+-------------------------
+
+You can directly build the dynamic module (`.so`) from this folder:
+
+First configure the module - this will also install the SDK in the ./sdk/ folder
+
+    ./configure
+
+Then make - this will build the `.so` file in the build ffolder
+
+    ./make
+
+Last copy the `.so` into the nginx module, and reload nginx 
+
+    cp build/ngx_http_js_module.so /path/to/nginx/modules/
+    nginx -s reload
+
+
+
+
+# Nginx Module Build
+-----------------------
+
 Configure nginx with HTTP JavaScript module using the --add-module option:
 
     ./configure --add-module=<path-to-njs>/nginx
@@ -14,7 +38,9 @@ and add the following line to nginx.conf and reload nginx:
 Please report your experiences to the NGINX development mailing list
 nginx-devel@nginx.org (http://mailman.nginx.org/mailman/listinfo/nginx-devel).
 
-JavaScript objects
+
+
+# JavaScript objects
 ------------------
 
 $r
@@ -33,8 +59,38 @@ $r
   |- send(data)
   |- finish()
 
+$v
+| - * maps to any nginx variable (eg `$v.geoip_city_country_code`)
 
-Example
+
+# Nginx directives
+------------------
+
+A new directive names `js_run_block` has been added. It is similar to `js_run` except that it takes
+as an argument a block instead of a string.
+
+Example:
+
+
+    location /getip
+    {
+        js_run_block {
+            function hello(req, res) {
+                res.status = 200;
+                res.sendHeader();
+                var ip = $v.remote_addr;
+                if (req.args.callback) {
+                    ip = req.args.callback+"("+ip+")";
+                }
+                res.send(ip);
+                res.finish();
+            }
+        };
+    }
+
+
+
+# Example
 -------
 
 Create nginx.conf:

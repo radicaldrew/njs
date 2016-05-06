@@ -3,9 +3,16 @@ NJS_VER =	20150922
 
 NXT_LIB =	nxt
 
+NXT_BUILDDIR =	build
+
+include Makefile.conf
+
+ifeq ($(NGX_DYNMOD),yes)
+include Makefile.dynmodule
+endif
+
 include $(NXT_LIB)/Makefile.conf
 
-NXT_BUILDDIR =	build
 
 
 $(NXT_BUILDDIR)/libnjs.a: \
@@ -78,7 +85,7 @@ test:	\
 	$(NXT_BUILDDIR)/njs_unit_test d
 
 clean:
-	rm -rf $(NXT_BUILDDIR)
+	rm -rf $(NXT_BUILDDIR) sdk Makefile.conf
 	rm $(NXT_LIB)/Makefile.conf $(NXT_LIB)/nxt_auto_config.h
 
 tarball:
