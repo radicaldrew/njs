@@ -80,16 +80,20 @@ Example:
         js_run_block {
             function hello(req, res) {
                 res.status = 200;
-                res.sendHeader();
                 var ip = $v.remote_addr;
                 if (req.args.callback) {
+                    res.contentType = 'text/javascript';
                     ip = req.args.callback+"("+ip+")";
+                } else {
+                    res.contentType = 'application/json';
                 }
+                res.sendHeader();
                 res.send(ip);
                 res.finish();
             }
         };
     }
+
 
 
 
@@ -161,24 +165,24 @@ $ curl 127.0.0.1:8000
 
 nginxjavascript
 
-$ curl -H "Foo: 1099" '127.0.0.1:8000/summary?a=1&fooo=bar&zyx=xyz'
+    $ curl -H "Foo: 1099" '127.0.0.1:8000/summary?a=1&fooo=bar&zyx=xyz'
 
 JS summary
 
-Method: GET
-HTTP version: 1.1
-Host: 127.0.0.1:8000
-Remote Address: 127.0.0.1
-URI: /summary
-Headers:
-  header "Host" is "127.0.0.1:8000"
-  header "User-Agent" is "curl/7.43.0"
-  header "Accept" is "*/*"
-  header "Foo" is "1099"
-Args:
-  arg "a" is "1"
-  arg "fooo" is "bar"
-  arg "zyx" is "xyz"
+    Method: GET
+    HTTP version: 1.1
+    Host: 127.0.0.1:8000
+    Remote Address: 127.0.0.1
+    URI: /summary
+    Headers:
+      header "Host" is "127.0.0.1:8000"
+      header "User-Agent" is "curl/7.43.0"
+      header "Accept" is "*/*"
+      header "Foo" is "1099"
+    Args:
+      arg "a" is "1"
+      arg "fooo" is "bar"
+      arg "zyx" is "xyz"
 
 
 --
