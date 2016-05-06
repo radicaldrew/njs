@@ -1,4 +1,7 @@
 
+Note: This repo is a fork of the official nginx/njs (nginScript) repo with support for **standalone module building** and **enhanced javascript** functionality. 
+
+
 # Standalone Module Build
 -------------------------
 
@@ -43,24 +46,24 @@ nginx-devel@nginx.org (http://mailman.nginx.org/mailman/listinfo/nginx-devel).
 # JavaScript objects
 ------------------
 
-$r
-|- uri
-|- method
-|- httpVersion
-|- remoteAddress
-|- headers{}
-|- args{}
-|- response
-  |- status
-  |- headers{}
-  |- contentType
-  |- contentLength
-  |- sendHeader()
-  |- send(data)
-  |- finish()
+    $r
+    |- uri
+    |- method
+    |- httpVersion
+    |- remoteAddress
+    |- headers{}
+    |- args{}
+    |- response
+      |- status
+      |- headers{}
+      |- contentType
+      |- contentLength
+      |- sendHeader()
+      |- send(data)
+      |- finish()
 
-$v
-| - * maps to any nginx variable (eg `$v.geoip_city_country_code`)
+    $v
+    | - * maps to any nginx variable (eg `$v.geoip_city_country_code`)
 
 
 # Nginx directives
