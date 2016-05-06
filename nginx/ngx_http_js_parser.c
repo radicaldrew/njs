@@ -37,10 +37,8 @@ ngx_http_js_parse_block(ngx_conf_t *cf, ngx_command_t *cmd)
     char             *rv;
     ngx_str_t        *dst;
     ngx_array_t      *saved;
-    u_char           *start;
 
     saved = cf->args;
-    start = cf->conf_file->buffer->pos;
 
     cf->args = ngx_array_create(cf->temp_pool, 4, sizeof(ngx_str_t));
     if (cf->args == NULL) {
@@ -111,7 +109,7 @@ ngx_http_js_run_read_block(ngx_conf_t *cf)
         return NULL;
     }
 
-    ngx_copy(p, start, len);
+    (void) ngx_copy(p, start, len);
     p[len-1]=0;
     return p;
 

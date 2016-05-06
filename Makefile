@@ -8,7 +8,7 @@ NXT_BUILDDIR =	build
 include Makefile.conf
 
 ifeq ($(NGX_DYNMOD),yes)
-include Makefile.dynmodule
+include nginx/Makefile
 endif
 
 include $(NXT_LIB)/Makefile.conf

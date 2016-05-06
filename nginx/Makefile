@@ -11,7 +11,7 @@ dynmodule: $(NXT_BUILDDIR)/libnxt.a $(NXT_BUILDDIR)/libnjs.a $(MODULE_OBJS)
 
 
  $(NXT_BUILDDIR)/%.o: nginx/%.c
-	$(NXT_CC) -c -fPIC -pipe  -O -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter \
+	$(NXT_CC) -c -fPIC -pipe  -O -Wall -Wextra -Wpointer-arith -Wno-unused-parameter \
 		-Wno-deprecated-declarations -Werror -g \
 		-I $(SDK_DIR)/src/core \
 		-I $(SDK_DIR)/src/event \
@@ -25,7 +25,7 @@ dynmodule: $(NXT_BUILDDIR)/libnxt.a $(NXT_BUILDDIR)/libnjs.a $(MODULE_OBJS)
 		-o $@ $<
 
 $(NXT_BUILDDIR)/ngx_http_js_module_modules.o: $(SDK_DIR)/objs/ngx_http_js_module_modules.c
-	$(NXT_CC) -c -fPIC -pipe  -O -Wall -Wextra -Wpointer-arith -Wconditional-uninitialized -Wno-unused-parameter \
+	$(NXT_CC) -c -fPIC -pipe  -O -Wall -Wextra -Wpointer-arith -Wno-unused-parameter \
 		-Wno-deprecated-declarations -Werror -g \
 		-I $(SDK_DIR)/src/core \
 		-I $(SDK_DIR)/src/event \

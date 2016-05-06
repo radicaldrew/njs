@@ -53,16 +53,13 @@ EOF
 
 # ------------------------------------------  SDK configuration
 
-pushd .
 echo "Building the SDK with options $NGX_OPTIONS"
 echo ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
 cd sdk/nginx-1.10.0 && ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
-popd
+cd ../..
 echo "NGX_DYNMOD = yes" > Makefile.conf
 echo "NGX_INCL_OPT = " >> Makefile.conf
 
 # ------------------------------------------ NXT Configuration
 
-pushd .
 cd nxt && NXT_BUILDDIR=../${NXT_BUILDDIR} CC=${CC} ./auto/configure
-popd
