@@ -21,6 +21,7 @@ dynmodule: $(NXT_BUILDDIR)/libnxt.a $(NXT_BUILDDIR)/libnjs.a $(MODULE_OBJS)
 		-I $(SDK_DIR)/src/http \
 		-I $(SDK_DIR)/src/http/modules \
 		-I nxt -I njs \
+		-D NGX_STANDALONE_MODULE_BUILD \
 		$(NGX_INCL_OPT) \
 		-o $@ $<
 

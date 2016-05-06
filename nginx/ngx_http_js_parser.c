@@ -96,6 +96,8 @@ ngx_http_js_run_read_block(ngx_conf_t *cf)
             cf->conf_file->line++;
         }
 
+        /* This is far from beeing the perfect parser ... so to be improved.
+         * And obviously, this should be part of the nginx sdk or library */
         if (pch=='}' && ch==';') {
             break;
         }

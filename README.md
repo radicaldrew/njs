@@ -7,39 +7,26 @@ Note: This repo is a fork of the official nginx/njs (nginScript) repo with suppo
 
 You can directly build the dynamic module (`.so`) from this folder:
 
-First configure the module - this will also install the SDK in the ./sdk/ folder
+First configure the module:
 
     ./configure
 
-Then make - this will build the `.so` file in the build ffolder
+This will install the SDK in the ./sdk/ folder.
+
+Then make:
 
     ./make
+
+It will build the `.so` file in the `build` folder.
 
 Last copy the `.so` into the nginx module, and reload nginx 
 
     cp build/ngx_http_js_module.so /path/to/nginx/modules/
     nginx -s reload
 
-
-
-
-# Nginx Module Build
------------------------
-
-Configure nginx with HTTP JavaScript module using the --add-module option:
-
-    ./configure --add-module=<path-to-njs>/nginx
-
-Alternatively, you can build a dynamic version of the njs module
-
-    ./configure --add-dynamic-module=<path-to-njs>/nginx
-
-and add the following line to nginx.conf and reload nginx:
+Make sure to load the module in your nginx config:
 
     load_module modules/ngx_http_js_module.so;
-
-Please report your experiences to the NGINX development mailing list
-nginx-devel@nginx.org (http://mailman.nginx.org/mailman/listinfo/nginx-devel).
 
 
 
@@ -138,7 +125,7 @@ Create nginx.conf:
             listen 8000;
 
             location / {
-                js_run "
+                js_run_block {
                     var res;
                     res = $r.response;
                     res.headers.foo = 1234;
@@ -150,7 +137,7 @@ Create nginx.conf:
                     res.send('java');
                     res.send('script');
                     res.finish();
-                    ";
+                };
             }
 
             location /summary {
