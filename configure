@@ -21,17 +21,19 @@ test -d $NXT_BUILDDIR || mkdir $NXT_BUILDDIR
 
 # ------------------------------------------  Module Configuration
 
-NGX_OPTIONS="--with-http_ssl_module --with-ipv6 --with-openssl=/nope/"
+#Standard nginx 1.10 options
+NGX_OPTIONS="--with-http_ssl_module --with-ipv6 --with-http_dav_module --with-http_v2_module --with-file-aio --with-openssl=/nope/"
 for option
 do
 	NGX_OPTIONS="$NGX_OPTIONS $option"
 
     case "$option" in
+        --) NGX_OPTIONS="" ;;
         --build-from-nginx-core) NGX_DYNMOD=no ;;
     esac
 done
 
-if [ $NGX_DYNMOD = YES ]; then
+if [ $NGX_DYNMOD = yes ]; then
 
 	# ------------------------------------------ Download SDK
 
