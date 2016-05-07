@@ -17,7 +17,7 @@ before_install:
 
 install:
   - sudo apt-get install -qq -y nginx
-  - git clone https://github.com/ronanj/njs
+  - git clone https://github.com/ronanj/njs.git
 
 script:
   - cd njs
