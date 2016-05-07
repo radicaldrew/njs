@@ -1,0 +1,27 @@
+dist: trusty
+sudo: required
+
+os: linux
+
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+env:
+  matrix:
+    - NGINX_VERSION=1.9.15
+    - NGINX_VERSION=1.10.0
+
+before_install:
+  - sudo apt-get install -qq -y nginx
+
+install:
+  - sudo apt-get install -qq -y nginx=${NGINX_VERSION}
+  - git clone https://github.com/ronanj/njs
+
+script:
+  - cd njs
+  -  ./configure
+  - make -j2 > build.log 2>&1 || (cat build.log && exit 1)
