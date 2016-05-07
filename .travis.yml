@@ -12,6 +12,8 @@ compiler:
 before_install:
   - sudo add-apt-repository ppa:nginx/stable -y 
   - sudo apt-get update -q
+  - sudo apt-get install -qq -y libpcre3-dev
+  - sudo apt-get install -qq -y zlib1g-dev
 
 install:
   - sudo apt-get install -qq -y nginx
