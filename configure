@@ -8,6 +8,16 @@
 LANG=C
 export LANG
 
+# ------------------------------------------  Check existing nginx
+
+NGX_VERSION="$(nginx -v 2>&1 | grep version)"
+if [ -z "$NGX_VERSION" ]; then
+    echo "Can not find nginx! Aborting"
+    exit
+fi
+
+# ------------------------------------------  Global configuration
+
 # Stop on error exit status.
 set -e
 # Stop on uninitialized variable.
@@ -17,15 +27,32 @@ CC=${CC:-}
 NXT_BUILDDIR=${NXT_BUILDDIR:-build}
 NGX_DYNMOD=yes
 
-test -d $NXT_BUILDDIR || mkdir $NXT_BUILDDIR
+# ------------------------------------- -----  Check existing nginx config
+
+NGX_OPTIONS=""
+
+for option in `nginx -V 2>&1`
+do
+    case "$option" in
+        --with-http_ssl_module)         NGX_OPTIONS="$NGX_OPTIONS $option --with-openssl=/nope/" ;;
+        --with-ipv6)                    NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-http_dav_module)         NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-http_v2_module)          NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-file-aio)                NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-threads)                 NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-http_gzip_static_module) NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+        --with-http_realip_module)      NGX_OPTIONS="$NGX_OPTIONS $option" ;;
+    esac
+done
+
+echo "Using configuration " $NGX_OPTIONS
 
 # ------------------------------------------  Module Configuration
 
 #Standard nginx 1.10 options
-NGX_OPTIONS="--with-http_ssl_module --with-ipv6 --with-http_dav_module --with-http_v2_module --with-file-aio --with-openssl=/nope/"
 for option
 do
-	NGX_OPTIONS="$NGX_OPTIONS $option"
+    NGX_OPTIONS="$NGX_OPTIONS $option"
 
     case "$option" in
         --) NGX_OPTIONS="" ;;
@@ -35,42 +62,44 @@ done
 
 if [ $NGX_DYNMOD = yes ]; then
 
-	# ------------------------------------------ Download SDK
+    # ------------------------------------------ Download SDK
 
-	NGINX_SDK="nginx-1.10.0"
-	NGINX_SDK_TGZ="${NGINX_SDK}.tar.gz"
+    NGINX_SDK="nginx-1.10.0"
+    NGINX_SDK_TGZ="${NGINX_SDK}.tar.gz"
 
-	if [ ! -f /tmp/$NGINX_SDK_TGZ ]; then
-		wget http://nginx.org/download/$NGINX_SDK_TGZ -O /tmp/$NGINX_SDK_TGZ
-	fi
-	mkdir -p sdk
-	tar xzf /tmp/$NGINX_SDK_TGZ -C sdk
+    if [ ! -f /tmp/$NGINX_SDK_TGZ ]; then
+        wget http://nginx.org/download/$NGINX_SDK_TGZ -O /tmp/$NGINX_SDK_TGZ
+    fi
+    mkdir -p sdk
+    tar xzf /tmp/$NGINX_SDK_TGZ -C sdk
 
-	# ------------------------------------------  Mock Open SSL
+    # ------------------------------------------  Mock Open SSL
 
-	mkdir -p sdk/$NGINX_SDK/objs/openssl
-	for f in bn.h conf.h crypto.h dh.h engine.h err.h evp.h ocsp.h rand.h rsa.h ssl.h x509.h x509v3.h; do
-		echo "" > sdk/$NGINX_SDK/objs/openssl/$f
-	done
+    mkdir -p sdk/$NGINX_SDK/objs/openssl
+    for f in bn.h conf.h crypto.h dh.h engine.h err.h evp.h ocsp.h rand.h rsa.h ssl.h x509.h x509v3.h; do
+        echo "" > sdk/$NGINX_SDK/objs/openssl/$f
+    done
 
-	cat <<EOF > sdk/$NGINX_SDK/objs/openssl/ssl.h
+    cat <<EOF > sdk/$NGINX_SDK/objs/openssl/ssl.h
 typedef void SSL_SESSION;
 typedef void SSL_CTX;
 typedef void SSL;
 typedef void RSA;
 EOF
 
-	# ------------------------------------------  SDK configuration
+    # ------------------------------------------  SDK configuration
 
-	echo "Building the SDK with options $NGX_OPTIONS"
-	echo ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
-	cd sdk/nginx-1.10.0 && ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS && cd ../..
-	echo "NGX_DYNMOD = yes" > Makefile.conf
-	echo "NGX_INCL_OPT = " >> Makefile.conf
+    echo "Building the SDK with options $NGX_OPTIONS"
+    echo ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS
+    cd sdk/nginx-1.10.0 && ./configure --add-dynamic-module=../../nginx $NGX_OPTIONS && cd ../..
+    echo "NGX_DYNMOD = yes" > Makefile.conf
+    echo "NGX_INCL_OPT = " >> Makefile.conf
 else
-	echo "" > Makefile.conf
+    echo "" > Makefile.conf
 fi
 
-# ------------------------------------------ NXT Configuration
+# ------------------------------------------ NXT and NJS Configuration
+
+test -d $NXT_BUILDDIR || mkdir $NXT_BUILDDIR
 
 cd nxt && NXT_BUILDDIR=../${NXT_BUILDDIR} CC=${CC} ./auto/configure && cd ..
