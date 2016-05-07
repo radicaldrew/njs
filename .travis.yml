@@ -15,7 +15,8 @@ env:
     - NGINX_VERSION=1.10.0
 
 before_install:
-  - sudo apt-get install -qq -y nginx
+  - sudo add-apt-repository ppa:nginx/stable -y 
+  - sudo apt-get update -q
 
 install:
   - sudo apt-get install -qq -y nginx=${NGINX_VERSION}
