@@ -11,7 +11,10 @@ Pull requests are accepted.
 --------------
 
 [![Build Status](https://travis-ci.org/ronanj/njs.svg?branch=master)](https://travis-ci.org/ronanj/njs)
-
+<a href="https://scan.coverity.com/projects/ronanj-njs">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/8788/badge.svg"/>
+</a>
 
 # Standalone Module Build
 -------------------------
