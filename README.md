@@ -1,5 +1,16 @@
 
-Note: This repo is a fork of the official nginx/njs (nginScript) repo with support for **standalone module building** and **enhanced javascript** functionality. 
+Note: This repo is a fork of the official nginx/njs (nginScript) repo with support for:
+
+   - **standalone module building** (build without having to build the whole nginx)
+   - **enhanced javascript**  (new variables, eg to read the geoip status)
+
+It has been tested on Centos, Ubuntu, Alpine Linux and OSX.   
+Pull requests are accepted.
+
+# Build Status
+--------------
+
+[![Build Status](https://travis-ci.org/ronanj/njs.svg?branch=master)](https://travis-ci.org/ronanj/njs)
 
 
 # Standalone Module Build
