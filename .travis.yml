@@ -24,6 +24,6 @@ script:
   - cd njs
   - ./configure
   - make -j2 > build.log 2>&1 || (cat build.log && exit 1)
-  - echo "load_module "`pwd`"/objs/ngx_http_js_module.so;" > nginx.conf
+  - echo "load_module "`pwd`"/build/ngx_http_js_module.so;" > nginx.conf
   - echo "events {}" >> nginx.conf
   - sudo nginx -t -c `pwd`/nginx.conf
